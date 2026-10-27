@@ -1,0 +1,239 @@
+{
+  "name": "dev-transcription",
+  "displayName": "Dev Transcription",
+  "description": "Tu biblioteca local de videos y transcripciones, organizada en colecciones.",
+  "version": "0.3.0",
+  "publisher": "raide",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "video",
+    "transcription",
+    "whisper",
+    "local",
+    "subtitles"
+  ],
+  "main": "./dist/extension.js",
+  "extensionKind": [
+    "ui"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": false
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "devTranscription.import",
+        "title": "Importar videos",
+        "category": "Dev Transcription",
+        "icon": "$(add)"
+      },
+      {
+        "command": "devTranscription.collection",
+        "title": "Crear colección",
+        "category": "Dev Transcription",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "devTranscription.refresh",
+        "title": "Actualizar biblioteca",
+        "category": "Dev Transcription",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "devTranscription.setup",
+        "title": "Instalar o reparar motor local",
+        "category": "Dev Transcription"
+      },
+      {
+        "command": "devTranscription.downloadModel",
+        "title": "Descargar modelo para uso sin conexión",
+        "category": "Dev Transcription"
+      },
+      {
+        "command": "devTranscription.storage",
+        "title": "Abrir carpeta de la biblioteca",
+        "category": "Dev Transcription"
+      },
+      {
+        "command": "devTranscription.settings",
+        "title": "Configuración",
+        "category": "Dev Transcription",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "devTranscription.logs",
+        "title": "Mostrar registro del motor",
+        "category": "Dev Transcription"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "devTranscription",
+          "title": "Dev Transcription",
+          "icon": "media/dev-transcription.svg"
+        }
+      ]
+    },
+    "views": {
+      "devTranscription": [
+        {
+          "id": "devTranscription.library",
+          "name": "Biblioteca",
+          "type": "webview"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "devTranscription.import",
+          "when": "view == devTranscription.library",
+          "group": "navigation@1"
+        },
+        {
+          "command": "devTranscription.refresh",
+          "when": "view == devTranscription.library",
+          "group": "navigation@2"
+        },
+        {
+          "command": "devTranscription.settings",
+          "when": "view == devTranscription.library",
+          "group": "navigation@99"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Dev Transcription",
+      "properties": {
+        "devTranscription.model": {
+          "type": "string",
+          "default": "large-v3",
+          "enum": [
+            "large-v3",
+            "turbo",
+            "medium",
+            "small",
+            "base",
+            "tiny"
+          ],
+          "scope": "application",
+          "description": "large-v3 prioriza calidad multilingüe. turbo y los modelos pequeños reducen tiempo y memoria."
+        },
+        "devTranscription.device": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "cpu",
+            "cuda"
+          ],
+          "scope": "machine",
+          "description": "auto intenta NVIDIA CUDA y vuelve a CPU si no está disponible. Apple/AMD usan CPU."
+        },
+        "devTranscription.language": {
+          "type": "string",
+          "default": "auto",
+          "scope": "application",
+          "description": "auto elige solo entre español e inglés en cada fragmento. es o en fijan un solo idioma.",
+          "enum": [
+            "auto",
+            "es",
+            "en"
+          ]
+        },
+        "devTranscription.initialPrompt": {
+          "type": "string",
+          "default": "",
+          "scope": "application",
+          "description": "Vocabulario o nombres propios para orientar el reconocimiento (opcional)."
+        },
+        "devTranscription.offline": {
+          "type": "boolean",
+          "default": false,
+          "scope": "machine",
+          "description": "Usar exclusivamente modelos ya descargados; bloquear descargas del motor durante la transcripción."
+        },
+        "devTranscription.pythonPath": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "description": "Python para crear el entorno privado (opcional). Se recomienda Python 3.12. No se modifica el Python del sistema."
+        },
+        "devTranscription.diarization": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Detectar hablantes localmente y asignar un ID por voz a cada intervención. Los nombres son editables por video."
+        },
+        "devTranscription.numSpeakers": {
+          "type": "integer",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 30,
+          "scope": "application",
+          "description": "Número conocido de hablantes; 0 lo estima automáticamente. Útil si la separación automática une o divide voces."
+        },
+        "devTranscription.speakerThreshold": {
+          "type": "number",
+          "default": 0.5,
+          "minimum": 0.1,
+          "maximum": 0.95,
+          "scope": "application",
+          "description": "Umbral de agrupación automática de voces. Un valor menor tiende a detectar más hablantes. Solo aplica con numSpeakers = 0."
+        },
+        "devTranscription.groupDialogues": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Agrupar fragmentos consecutivos en la lectura según hablante y pausas. La vista Tiempos mantiene los fragmentos originales."
+        },
+        "devTranscription.dialogueGapSeconds": {
+          "type": "number",
+          "default": 3,
+          "minimum": 0,
+          "maximum": 30,
+          "scope": "application",
+          "description": "Pausa máxima, en segundos, entre fragmentos para unirlos en un diálogo. Sin hablantes asignados, agrupa solo por tiempo."
+        },
+        "devTranscription.dialogueMaxSeconds": {
+          "type": "number",
+          "default": 60,
+          "minimum": 5,
+          "maximum": 300,
+          "scope": "application",
+          "description": "Duración máxima, en segundos, al unir fragmentos en un bloque de lectura."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts && python3 -m unittest discover -s test -p '*_test.py'",
+    "check": "npm run typecheck && npm test && npm run build",
+    "vscode:prepublish": "npm run build",
+    "package": "npm run check && vsce package --no-dependencies --allow-missing-repository --out dist/dev-transcription-0.3.0.vsix"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.7.2"
+  }
+}
