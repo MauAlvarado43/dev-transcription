@@ -1,3 +1,4 @@
+import { t, locale, setLocale, localizeError, localizeMessage, LocalizedError } from './i18n';
 import * as vscode from 'vscode';
 import * as path from 'node:path';
 import { randomBytes } from 'node:crypto';
@@ -14,6 +15,7 @@ type Message = { type: string; id?: string; name?: string; collectionId?: string
 interface Editor { panel: vscode.WebviewPanel; revision: number }
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
+  setLocale(vscode.workspace.getConfiguration('devTranscription').get('interfaceLanguage', 'en'));
   const root = context.globalStorageUri.fsPath;
   const store = new LibraryStore(path.join(root, 'library'));
   await store.init();
@@ -27,7 +29,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     if (error instanceof Cancelled) return;
     const message = error instanceof Error ? error.message : String(error);
     output.appendLine(message);
-    void vscode.window.showErrorMessage(`Dev Transcription: ${message.slice(-650)}`, 'Ver registro').then(choice => { if (choice) output.show(); });
+    void vscode.window.showErrorMessage(`Dev Transcription: ${localizeError(error).slice(-650)}`, t('viewLog')).then(choice => { if (choice) output.show(); });
   };
   let sidebar: vscode.WebviewView | undefined;
   let settingsPanel: vscode.WebviewPanel | undefined;
@@ -42,12 +44,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   async function library(): Promise<void> {
     if (disposed) return;
     const state = { collections: await store.collections(), videos: await store.videos(), jobs: queue.snapshot() };
-    await sidebar?.webview.postMessage({ type: 'library', state, options: engine.options(), ready: await engine.ready() });
-    for (const [id, editor] of editors) void editor.panel.webview.postMessage({ type: 'job', job: state.jobs.find(j => j.id === id) ?? null });
+    await sidebar?.webview.postMessage({ type: 'library', locale: locale(), state, options: engine.options(), ready: await engine.ready() });
+    for (const [id, editor] of editors) void editor.panel.webview.postMessage({ type: 'job', locale: locale(), job: state.jobs.find(j => j.id === id) ?? null });
     if (state.jobs.length) {
       const active = state.jobs.find(j => j.state === 'running');
-      status.text = `$(sync~spin) ${active ? jobProgressLabel(active) : 'Transcripción'} · ${state.jobs.length}`;
-      status.tooltip = active?.message;
+      status.text = `$(sync~spin) ${active ? jobProgressLabel(active) : t('transcription')} · ${state.jobs.length}`;
+      status.tooltip = active ? localizeMessage(active.message) : undefined;
       status.show();
     } else status.hide();
   }
@@ -64,7 +66,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     if (!editor) return;
     const video = await store.video(id);
     editor.panel.title = video.title;
-    await editor.panel.webview.postMessage({ type: 'detail', video, transcript: await store.transcript(id), text: await store.text(id), revision: editor.revision, job: queue.snapshot().find(j => j.id === id) ?? null, readingOptions: readingOptions(), media: editor.panel.webview.asWebviewUri(vscode.Uri.file(await store.source(id))).toString() });
+    await editor.panel.webview.postMessage({ type: 'detail', locale: locale(), video, transcript: await store.transcript(id), text: await store.text(id), revision: editor.revision, job: queue.snapshot().find(j => j.id === id) ?? null, readingOptions: readingOptions(), media: editor.panel.webview.asWebviewUri(vscode.Uri.file(await store.source(id))).toString() });
   }
   function bind(webview: vscode.Webview, handler: (m: Message) => Promise<void>, local: vscode.Disposable[]): () => Promise<void> {
     let chain: Promise<void> = Promise.resolve();
@@ -73,7 +75,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       const m = raw as Message;
       if (['id', 'name', 'collectionId', 'query', 'text', 'format', 'speakerId', 'segmentId'].some(key => (m as unknown as Record<string, unknown>)[key] !== undefined && typeof (m as unknown as Record<string, unknown>)[key] !== 'string')) return;
       chain = chain.then(() => handler(m)).catch(error => {
-        void webview.postMessage({ type: 'error', message: error instanceof Error ? error.message.slice(-1200) : String(error) });
+        void webview.postMessage({ type: 'error', message: localizeError(error).slice(-1200) });
         report(error);
       });
     }));
@@ -82,14 +84,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   function html(webview: vscode.Webview, page: 'library' | 'editor' | 'settings'): string {
     const nonce = randomBytes(20).toString('hex');
     const uri = (name: string) => webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'dist', name)).toString();
-    return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; media-src ${webview.cspSource}; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';"><link rel="stylesheet" href="${uri('webview.css')}"><title>Dev Transcription</title></head><body data-page="${page}"><div id="app"></div><script nonce="${nonce}" src="${uri('webview.js')}"></script></body></html>`;
+    return `<!DOCTYPE html><html lang="${locale()}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; media-src ${webview.cspSource}; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';"><link rel="stylesheet" href="${uri('webview.css')}"><title>Dev Transcription</title></head><body data-page="${page}"><div id="app"></div><script nonce="${nonce}" src="${uri('webview.js')}"></script></body></html>`;
   }
   async function settingsData(): Promise<void> {
-    await settingsPanel?.webview.postMessage({ type: 'settings', options: engine.options(), readingOptions: readingOptions(), ready: await engine.ready(), pythonPath: vscode.workspace.getConfiguration('devTranscription').get('pythonPath', '') });
+    await settingsPanel?.webview.postMessage({ type: 'settings', locale: locale(), options: engine.options(), readingOptions: readingOptions(), ready: await engine.ready(), pythonPath: vscode.workspace.getConfiguration('devTranscription').get('pythonPath', '') });
   }
   async function showSettings(): Promise<void> {
     if (settingsPanel) { settingsPanel.reveal(); await settingsData(); return; }
-    const panel = vscode.window.createWebviewPanel('devTranscription.settings', 'Dev Transcription · Configuración', vscode.ViewColumn.One, { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'dist')] });
+    const panel = vscode.window.createWebviewPanel('devTranscription.settings', t('settingsTitle'), vscode.ViewColumn.One, { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'dist')] });
     settingsPanel = panel;
     const local: vscode.Disposable[] = [];
     bind(panel.webview, async m => {
@@ -97,9 +99,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         case 'ready': await settingsData(); break;
         case 'setting': {
           const allowed: Record<string, (v: unknown) => boolean> = {
+            interfaceLanguage: v => v === 'en' || v === 'es',
             model: v => ['large-v3', 'turbo', 'medium', 'small', 'base', 'tiny'].includes(String(v)),
             device: v => ['auto', 'cpu', 'cuda'].includes(String(v)),
-            language: v => typeof v === 'string' && /^(auto|[a-z]{2,3})$/.test(v),
+            language: v => ['auto', 'es', 'en'].includes(String(v)),
             initialPrompt: v => typeof v === 'string' && v.length <= 4000,
             pythonPath: v => typeof v === 'string' && v.length <= 4096,
             offline: v => typeof v === 'boolean', diarization: v => typeof v === 'boolean',
@@ -109,7 +112,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             dialogueGapSeconds: v => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 30,
             dialogueMaxSeconds: v => typeof v === 'number' && Number.isFinite(v) && v >= 5 && v <= 300,
           };
-          if (!m.key || !Object.hasOwn(allowed, m.key) || !allowed[m.key]!(m.value)) throw new Error('Valor de configuración inválido.');
+          if (!m.key || !Object.hasOwn(allowed, m.key) || !allowed[m.key]!(m.value)) throw new LocalizedError('invalidSetting');
           await vscode.workspace.getConfiguration('devTranscription').update(m.key, m.value, vscode.ConfigurationTarget.Global);
           await settingsData();
           break;
@@ -142,7 +145,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         case 'ready': await detail(id); break;
         case 'save': {
           if (typeof m.text !== 'string' || !Number.isSafeInteger(m.revision) || m.revision! < 1) return;
-          if (queue.has(id)) throw new Error('Espera a que termine la transcripción para editarla.');
+          if (queue.has(id)) throw new LocalizedError('waitToEdit');
           // Accepted saves finish even if the panel closes before disk IO completes.
           if (m.revision! <= editor.revision) return;
           await store.saveText(id, m.text);
@@ -157,7 +160,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           break;
         }
         case 'renameSpeaker': case 'addSpeaker': case 'assignSpeaker': {
-          if (queue.has(id)) throw new Error('Espera a que termine la transcripción para modificar hablantes.');
+          if (queue.has(id)) throw new LocalizedError('waitToEditSpeakers');
           if (m.type === 'renameSpeaker' && m.speakerId && m.name) await store.renameSpeaker(id, m.speakerId, m.name);
           if (m.type === 'addSpeaker' && m.name) await store.addSpeaker(id, m.name);
           if (m.type === 'assignSpeaker' && m.speakerId && m.segmentId) await store.assignSpeaker(id, m.segmentId, m.speakerId);
@@ -168,7 +171,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         case 'export': await exportVideo(id, m.format ?? 'md'); break;
         case 'external': {
           const source = vscode.Uri.file(await store.source(id));
-          if (!await vscode.env.openExternal(source)) throw new Error('No se pudo abrir el reproductor del sistema.');
+          if (!await vscode.env.openExternal(source)) throw new LocalizedError('openPlayerFailed');
           break;
         }
         case 'reveal': await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(store.videoDir(id))); break;
@@ -187,16 +190,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   async function chooseCollection(id?: string): Promise<string | undefined> {
     if (id) { await store.collection(id); return id; }
     const collections = await store.collections();
-    if (!collections.length) return (await store.createCollection('General')).id;
+    if (!collections.length) return (await store.createCollection(t('general'))).id;
     if (collections.length === 1) return collections[0]!.id;
-    return (await vscode.window.showQuickPick(collections.map(c => ({ label: c.name, id: c.id })), { title: 'Importar en colección' }))?.id;
+    return (await vscode.window.showQuickPick(collections.map(c => ({ label: c.name, id: c.id })), { title: t('importIntoCollection') }))?.id;
   }
   async function importVideos(id?: string): Promise<void> {
     const collectionId = await chooseCollection(id);
     if (!collectionId) return;
-    const files = await vscode.window.showOpenDialog({ canSelectMany: true, canSelectFiles: true, canSelectFolders: false, title: 'Importar videos a la biblioteca local', filters: { Videos: VIDEO_EXTENSIONS } });
+    const files = await vscode.window.showOpenDialog({ canSelectMany: true, canSelectFiles: true, canSelectFolders: false, title: t('importDialog'), filters: { Videos: VIDEO_EXTENSIONS } });
     if (!files?.length) return;
-    await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Copiando videos a tu biblioteca', cancellable: true }, async (progress, token) => {
+    await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: t('copyingVideos'), cancellable: true }, async (progress, token) => {
       const errors: string[] = [];
       for (const [index, file] of files.entries()) {
         if (token.isCancellationRequested) break;
@@ -218,7 +221,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   async function transcribe(id: string): Promise<void> {
     if (queue.has(id)) return;
     if (await store.text(id)) {
-      const answer = await vscode.window.showWarningMessage('Se regenerará la transcripción. El texto actual quedará guardado en transcript.previous.md.', { modal: true }, 'Regenerar');
+      const answer = await vscode.window.showWarningMessage(t('regenerateWarning'), { modal: true }, t('regenerate'));
       if (!answer) return;
     }
     await ensureEngine();
@@ -230,21 +233,21 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     if (format === 'md') text = exportMarkdown(await store.text(id), await store.transcript(id));
     else {
       const transcript = await store.transcript(id);
-      if (!transcript) throw new Error('Primero genera una transcripción.');
+      if (!transcript) throw new LocalizedError('transcriptRequired');
       if (format === 'srt' || format === 'vtt') text = subtitles(transcript, format);
       else if (format === 'txt') text = transcript.segments.map(s => speakerText(transcript, s)).join('\n') + '\n';
       else if (format === 'json') text = JSON.stringify(transcript, null, 2);
-      else throw new Error('Formato de exportación inválido.');
+      else throw new LocalizedError('invalidExport');
     }
-    if (!text) throw new Error('Todavía no hay una transcripción para exportar.');
-    const name = video.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').slice(0, 100) || 'transcripcion';
-    const target = await vscode.window.showSaveDialog({ defaultUri: vscode.Uri.file(path.join(homedir(), `${name}.${format}`)), filters: { [format.toUpperCase()]: [format] }, title: format === 'md' ? 'Exportar texto editado' : 'Exportar reconocimiento original (sin ediciones Markdown)' });
+    if (!text) throw new LocalizedError('nothingToExport');
+    const name = video.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').slice(0, 100) || 'transcript';
+    const target = await vscode.window.showSaveDialog({ defaultUri: vscode.Uri.file(path.join(homedir(), `${name}.${format}`)), filters: { [format.toUpperCase()]: [format] }, title: format === 'md' ? t('exportEdited') : t('exportRecognition') });
     if (!target) return;
     const resolved = path.resolve(target.fsPath);
     const relative = path.relative(path.resolve(root), resolved);
-    if (!relative || (!relative.startsWith('..' + path.sep) && relative !== '..' && !path.isAbsolute(relative))) throw new Error('Exporta fuera del almacenamiento interno para evitar sobrescribir tu biblioteca.');
+    if (!relative || (!relative.startsWith('..' + path.sep) && relative !== '..' && !path.isAbsolute(relative))) throw new LocalizedError('exportOutsideStorage');
     await vscode.workspace.fs.writeFile(target, Buffer.from(text, 'utf8'));
-    void vscode.window.showInformationMessage(`Exportado: ${path.basename(target.fsPath)}`);
+    void vscode.window.showInformationMessage(t('exported', { name: path.basename(target.fsPath) }));
   }
   async function sidebarMessage(m: Message): Promise<void> {
     switch (m.type) {
@@ -257,9 +260,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       case 'rename': if (m.id && m.name) { await store.updateVideo(m.id, { title: m.name }); await detail(m.id); await library(); } break;
       case 'move': if (m.id && m.collectionId) { await store.updateVideo(m.id, { collectionId: m.collectionId }); await library(); } break;
       case 'delete': if (m.id) {
-        if (queue.has(m.id)) throw new Error('Cancela la transcripción antes de eliminar el video.');
+        if (queue.has(m.id)) throw new LocalizedError('cancelBeforeDelete');
         const video = await store.video(m.id);
-        const answer = await vscode.window.showWarningMessage(`¿Enviar «${video.title}» y su transcripción a la papelera? El archivo original se conserva.`, { modal: true }, 'Eliminar');
+        const answer = await vscode.window.showWarningMessage(t('deleteWarning', { title: video.title }), { modal: true }, t('delete'));
         if (!answer) return;
         editors.get(m.id)?.panel.dispose();
         await closing.get(m.id);
@@ -270,7 +273,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       case 'transcribe': if (m.id) await transcribe(m.id); break;
       case 'transcribeCollection': if (m.id) {
         const videos = (await store.videos()).filter(v => v.collectionId === m.id && !v.transcribedAt && !queue.has(v.id));
-        if (!videos.length) { void vscode.window.showInformationMessage('Esta colección no tiene videos pendientes.'); return; }
+        if (!videos.length) { void vscode.window.showInformationMessage(t('noPendingVideos')); return; }
         await ensureEngine();
         for (const v of videos) {
           if (!await store.text(v.id)) await queue.add(v.id);
@@ -303,8 +306,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       }
     }, { webviewOptions: { retainContextWhenHidden: true } }),
     vscode.workspace.onDidChangeConfiguration(e => { if (e.affectsConfiguration('devTranscription')) {
+      setLocale(vscode.workspace.getConfiguration('devTranscription').get('interfaceLanguage', 'en'));
+      if (settingsPanel) settingsPanel.title = t('settingsTitle');
       scheduleRefresh(); void settingsData().catch(report);
-      for (const editor of editors.values()) void editor.panel.webview.postMessage({ type: 'readingOptions', options: readingOptions() });
+      for (const editor of editors.values()) void editor.panel.webview.postMessage({ type: 'readingOptions', locale: locale(), options: readingOptions() });
     } }),
     { dispose() { disposed = true; if (refreshTimer) clearTimeout(refreshTimer); settingsPanel?.dispose(); for (const e of editors.values()) e.panel.dispose(); } }
   );

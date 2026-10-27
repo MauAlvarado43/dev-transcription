@@ -35,7 +35,7 @@ def run(args):
         import sherpa_onnx
         emit("ready", version=ctranslate2.__version__, cuda=ctranslate2.get_cuda_device_count(), av=av.__version__)
         return
-    emit("status", stage="preparing", message="Cargando modelo local…" if args.offline else "Descargando / cargando modelo (la primera vez puede tardar)…")
+    emit("status", stage="preparing", message="Loading local model…" if args.offline else "Downloading / loading model (first use may take a while)…")
     model = WhisperModel(args.model, device=args.device,
                          compute_type="float16" if args.device == "cuda" else "int8",
                          download_root=args.cache, local_files_only=args.offline,
@@ -43,13 +43,13 @@ def run(args):
     if args.download:
         if not args.no_speakers:
             from speakers import prepare_models
-            emit("status", stage="preparing", message="Preparando modelos locales de hablantes…")
+            emit("status", stage="preparing", message="Preparing local speaker models…")
             prepare_models(args.cache, args.offline)
         emit("done", downloaded=True)
         return
     if not args.input or not args.output:
-        raise ValueError("Falta el archivo de entrada o salida")
-    emit("status", stage="audio", message="Extrayendo audio del video…")
+        raise ValueError("Missing input or output file")
+    emit("status", stage="audio", message="Extracting audio from video…")
     from faster_whisper.audio import decode_audio
     from speakers import diarize, speech_chunks, split_by_speaker
     from languages import choose_language, supported_script
@@ -57,16 +57,16 @@ def run(args):
     duration = len(source) / 16000
     turns = []
     if not args.no_speakers:
-        emit("status", stage="speakers", message="Preparando detección de voces…")
+        emit("status", stage="speakers", message="Preparing voice detection…")
         turns = diarize(source, args.cache, args.offline, args.num_speakers, args.speaker_threshold, emit)
     result = []
     languages = set()
     previous_language = "es" if args.language == "auto" else args.language
-    emit("status", stage="speech", message="Localizando fragmentos de voz…")
+    emit("status", stage="speech", message="Locating speech segments…")
     chunks = speech_chunks(source, turns)
     speech_samples = sum(end - start for start, end in chunks)
     processed_samples = 0
-    emit("progress", stage="transcription", percent=0, duration=duration, message="Transcribiendo en el idioma de cada fragmento…" if args.language == "auto" else "Transcribiendo…")
+    emit("progress", stage="transcription", percent=0, duration=duration, message="Transcribing in each segment’s language…" if args.language == "auto" else "Transcribing…")
     # A single language prompt for a mixed-language 30 s window can translate or
     # omit speech. Decode each short voice span independently, resetting context.
     for index, (start, end) in enumerate(chunks):
@@ -85,7 +85,7 @@ def run(args):
             if not text:
                 continue
             if not supported_script(text):
-                text = segment.text = "[Fragmento no reconocido]"
+                text = segment.text = "[Unrecognized segment]"
                 segment.words = None
             segment.start = max(offset, segment.start + offset)
             segment.end = max(segment.start, min(duration, segment.end + offset))
@@ -102,15 +102,15 @@ def run(args):
             languages.add(language)
         processed_samples += end - start
         emit("progress", stage="transcription", percent=100 * processed_samples / max(speech_samples, 1),
-             message=f"Transcribiendo fragmento {index + 1} / {len(chunks)}")
-    emit("progress", stage="transcription", percent=100, message="Transcripción completada")
+             message=f"Transcribing segment {index + 1} / {len(chunks)}")
+    emit("progress", stage="transcription", percent=100, message="Transcription completed")
     result.sort(key=lambda item: item["start"])
     actors = {}
     for index, item in enumerate(result):
         item["id"] = f"segment-{index + 1:06d}"
         label = item["speakerId"]
         if label not in actors:
-            actors[label] = {"id": label, "name": "Sin identificar" if label == "actor-unknown" else f"Hablante {int(label.split('-')[1])}"}
+            actors[label] = {"id": label, "name": "Unidentified" if label == "actor-unknown" else f"Speaker {int(label.split('-')[1])}"}
     language = next(iter(languages)) if len(languages) == 1 else "mul" if languages else "und"
     payload = {"version": 1, "language": language, "languages": sorted(languages), "multilingual": args.language == "auto", "duration": duration,
                "model": args.model, "device": args.device, "segments": result, "speakers": sorted(actors.values(), key=lambda a: a["id"])}

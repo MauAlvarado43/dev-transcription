@@ -50,7 +50,7 @@ test('rename, correction, manual actor and restart preserve edited prose and spe
   assert.match(exportMarkdown(await reopened.text(video.id), result), /Ana \[actor-003\]/);
   assert.deepEqual(await reopened.search('mauricio'), [video.id]);
   await assert.rejects(store.renameSpeaker(video.id, '../escape', 'Invalid'));
-  await assert.rejects(store.assignSpeaker(video.id, 'segment-000001', 'actor-999'), /No se encontró/);
+  await assert.rejects(store.assignSpeaker(video.id, 'segment-000001', 'actor-999'), /not found/);
   await store.saveTranscript(video.id, conversation());
   const previous = JSON.parse(await fs.readFile(path.join(store.videoDir(video.id), 'transcript.previous.json'), 'utf8')) as Transcript;
   assert.equal(previous.speakers![0]!.name, 'Mauricio');

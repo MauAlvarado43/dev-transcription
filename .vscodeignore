@@ -12,3 +12,5 @@
 !python/speakers.py
 !python/languages.py
 !python/requirements.txt
+!package.nls.json
+!package.nls.es.json

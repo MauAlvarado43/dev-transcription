@@ -1,8 +1,8 @@
 {
   "name": "dev-transcription",
   "displayName": "Dev Transcription",
-  "description": "Tu biblioteca local de videos y transcripciones, organizada en colecciones.",
-  "version": "0.3.0",
+  "description": "%extension.description%",
+  "version": "0.4.0",
   "publisher": "raide",
   "license": "MIT",
   "repository": {
@@ -43,46 +43,46 @@
     "commands": [
       {
         "command": "devTranscription.import",
-        "title": "Importar videos",
+        "title": "%command.import.title%",
         "category": "Dev Transcription",
         "icon": "$(add)"
       },
       {
         "command": "devTranscription.collection",
-        "title": "Crear colección",
+        "title": "%command.collection.title%",
         "category": "Dev Transcription",
         "icon": "$(new-folder)"
       },
       {
         "command": "devTranscription.refresh",
-        "title": "Actualizar biblioteca",
+        "title": "%command.refresh.title%",
         "category": "Dev Transcription",
         "icon": "$(refresh)"
       },
       {
         "command": "devTranscription.setup",
-        "title": "Instalar o reparar motor local",
+        "title": "%command.setup.title%",
         "category": "Dev Transcription"
       },
       {
         "command": "devTranscription.downloadModel",
-        "title": "Descargar modelo para uso sin conexión",
+        "title": "%command.downloadModel.title%",
         "category": "Dev Transcription"
       },
       {
         "command": "devTranscription.storage",
-        "title": "Abrir carpeta de la biblioteca",
+        "title": "%command.storage.title%",
         "category": "Dev Transcription"
       },
       {
         "command": "devTranscription.settings",
-        "title": "Configuración",
+        "title": "%command.settings.title%",
         "category": "Dev Transcription",
         "icon": "$(settings-gear)"
       },
       {
         "command": "devTranscription.logs",
-        "title": "Mostrar registro del motor",
+        "title": "%command.logs.title%",
         "category": "Dev Transcription"
       }
     ],
@@ -99,7 +99,7 @@
       "devTranscription": [
         {
           "id": "devTranscription.library",
-          "name": "Biblioteca",
+          "name": "%view.library.name%",
           "type": "webview"
         }
       ]
@@ -138,7 +138,7 @@
             "tiny"
           ],
           "scope": "application",
-          "description": "large-v3 prioriza calidad multilingüe. turbo y los modelos pequeños reducen tiempo y memoria."
+          "description": "%config.model.description%"
         },
         "devTranscription.device": {
           "type": "string",
@@ -149,13 +149,13 @@
             "cuda"
           ],
           "scope": "machine",
-          "description": "auto intenta NVIDIA CUDA y vuelve a CPU si no está disponible. Apple/AMD usan CPU."
+          "description": "%config.device.description%"
         },
         "devTranscription.language": {
           "type": "string",
           "default": "auto",
           "scope": "application",
-          "description": "auto elige solo entre español e inglés en cada fragmento. es o en fijan un solo idioma.",
+          "description": "%config.language.description%",
           "enum": [
             "auto",
             "es",
@@ -166,25 +166,25 @@
           "type": "string",
           "default": "",
           "scope": "application",
-          "description": "Vocabulario o nombres propios para orientar el reconocimiento (opcional)."
+          "description": "%config.initialPrompt.description%"
         },
         "devTranscription.offline": {
           "type": "boolean",
           "default": false,
           "scope": "machine",
-          "description": "Usar exclusivamente modelos ya descargados; bloquear descargas del motor durante la transcripción."
+          "description": "%config.offline.description%"
         },
         "devTranscription.pythonPath": {
           "type": "string",
           "default": "",
           "scope": "machine",
-          "description": "Python para crear el entorno privado (opcional). Se recomienda Python 3.12. No se modifica el Python del sistema."
+          "description": "%config.pythonPath.description%"
         },
         "devTranscription.diarization": {
           "type": "boolean",
           "default": true,
           "scope": "application",
-          "description": "Detectar hablantes localmente y asignar un ID por voz a cada intervención. Los nombres son editables por video."
+          "description": "%config.diarization.description%"
         },
         "devTranscription.numSpeakers": {
           "type": "integer",
@@ -192,7 +192,7 @@
           "minimum": 0,
           "maximum": 30,
           "scope": "application",
-          "description": "Número conocido de hablantes; 0 lo estima automáticamente. Útil si la separación automática une o divide voces."
+          "description": "%config.numSpeakers.description%"
         },
         "devTranscription.speakerThreshold": {
           "type": "number",
@@ -200,13 +200,13 @@
           "minimum": 0.1,
           "maximum": 0.95,
           "scope": "application",
-          "description": "Umbral de agrupación automática de voces. Un valor menor tiende a detectar más hablantes. Solo aplica con numSpeakers = 0."
+          "description": "%config.speakerThreshold.description%"
         },
         "devTranscription.groupDialogues": {
           "type": "boolean",
           "default": true,
           "scope": "application",
-          "description": "Agrupar fragmentos consecutivos en la lectura según hablante y pausas. La vista Tiempos mantiene los fragmentos originales."
+          "description": "%config.groupDialogues.description%"
         },
         "devTranscription.dialogueGapSeconds": {
           "type": "number",
@@ -214,7 +214,7 @@
           "minimum": 0,
           "maximum": 30,
           "scope": "application",
-          "description": "Pausa máxima, en segundos, entre fragmentos para unirlos en un diálogo. Sin hablantes asignados, agrupa solo por tiempo."
+          "description": "%config.dialogueGapSeconds.description%"
         },
         "devTranscription.dialogueMaxSeconds": {
           "type": "number",
@@ -222,7 +222,21 @@
           "minimum": 5,
           "maximum": 300,
           "scope": "application",
-          "description": "Duración máxima, en segundos, al unir fragmentos en un bloque de lectura."
+          "description": "%config.dialogueMaxSeconds.description%"
+        },
+        "devTranscription.interfaceLanguage": {
+          "type": "string",
+          "default": "en",
+          "enum": [
+            "en",
+            "es"
+          ],
+          "scope": "application",
+          "description": "%config.interfaceLanguage.description%",
+          "enumDescriptions": [
+            "%config.interfaceLanguage.english%",
+            "%config.interfaceLanguage.spanish%"
+          ]
         }
       }
     }

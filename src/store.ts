@@ -1,3 +1,4 @@
+import { LocalizedError } from './i18n';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -45,19 +46,19 @@ export class LibraryStore {
   }
   async video(id: string): Promise<Video> {
     const video = JSON.parse(await fs.readFile(path.join(this.videoDir(id), 'video.json'), 'utf8')) as Video;
-    if (video.id !== id || typeof video.title !== 'string' || typeof video.fileName !== 'string' || !/^source\.[a-z0-9]+$/.test(video.fileName)) throw new Error('Metadatos de video inválidos.');
+    if (video.id !== id || typeof video.title !== 'string' || typeof video.fileName !== 'string' || !/^source\.[a-z0-9]+$/.test(video.fileName)) throw new LocalizedError('invalidVideo');
     validId(video.collectionId);
     return video;
   }
   async collection(id: string): Promise<Collection> {
     const c = JSON.parse(await fs.readFile(this.collectionFile(id), 'utf8')) as Collection;
-    if (c.id !== id || typeof c.name !== 'string') throw new Error('Colección inválida.');
+    if (c.id !== id || typeof c.name !== 'string') throw new LocalizedError('invalidCollection');
     return c;
   }
   createCollection(name: string): Promise<Collection> {
     return this.mutate(async () => {
       name = validName(name);
-      if ((await this.collections()).some(c => c.name.toLocaleLowerCase() === name.toLocaleLowerCase())) throw new Error('Ya existe una colección con ese nombre.');
+      if ((await this.collections()).some(c => c.name.toLocaleLowerCase() === name.toLocaleLowerCase())) throw new LocalizedError('collectionExists');
       const collection = { id: randomUUID(), name };
       await atomicWrite(this.collectionFile(collection.id), JSON.stringify(collection, null, 2));
       return collection;
@@ -67,14 +68,14 @@ export class LibraryStore {
     return this.mutate(async () => {
       name = validName(name);
       const c = await this.collection(id);
-      if ((await this.collections()).some(x => x.id !== id && x.name.toLocaleLowerCase() === name.toLocaleLowerCase())) throw new Error('Ya existe una colección con ese nombre.');
+      if ((await this.collections()).some(x => x.id !== id && x.name.toLocaleLowerCase() === name.toLocaleLowerCase())) throw new LocalizedError('collectionExists');
       await atomicWrite(this.collectionFile(id), JSON.stringify({ ...c, name }, null, 2));
     });
   }
   removeEmptyCollection(id: string): Promise<void> {
     return this.mutate(async () => {
       await this.collection(id);
-      if ((await this.videos()).some(v => v.collectionId === id)) throw new Error('Mueve o elimina los videos antes de borrar la colección.');
+      if ((await this.videos()).some(v => v.collectionId === id)) throw new LocalizedError('collectionNotEmpty');
       await fs.unlink(this.collectionFile(id));
     });
   }
@@ -82,9 +83,9 @@ export class LibraryStore {
     return this.mutate(async () => {
       await this.collection(collectionId);
       const ext = path.extname(source).slice(1).toLowerCase();
-      if (!VIDEO_EXTENSIONS.includes(ext)) throw new Error('Formato de video no admitido.');
+      if (!VIDEO_EXTENSIONS.includes(ext)) throw new LocalizedError('unsupportedVideo');
       const stat = await fs.stat(source);
-      if (!stat.isFile()) throw new Error('Selecciona un archivo de video.');
+      if (!stat.isFile()) throw new LocalizedError('selectVideo');
       const id = randomUUID();
       const staging = path.join(this.root, 'videos', `.import-${id}`);
       const video: Video = { id, collectionId, title: path.basename(source, path.extname(source)), fileName: `source.${ext}`, originalName: path.basename(source), bytes: stat.size, importedAt: new Date().toISOString() };
@@ -115,7 +116,7 @@ export class LibraryStore {
   saveText(id: string, text: string): Promise<void> {
     return this.mutate(async () => {
       await this.video(id);
-      if (text.length > 20_000_000) throw new Error('La transcripción es demasiado grande.');
+      if (text.length > 20_000_000) throw new LocalizedError('transcriptTooLarge');
       await atomicWrite(path.join(this.videoDir(id), 'transcript.md'), text);
     });
   }
@@ -124,7 +125,7 @@ export class LibraryStore {
       requireSpeakerId(speakerId); name = validName(name);
       const transcript = await this.transcript(id);
       const speaker = transcript?.speakers?.find(s => s.id === speakerId);
-      if (!transcript || !speaker) throw new Error('No se encontró el hablante.');
+      if (!transcript || !speaker) throw new LocalizedError('speakerNotFound');
       speaker.name = name;
       await atomicWrite(path.join(this.videoDir(id), 'transcript.json'), JSON.stringify(transcript, null, 2));
       return transcript;
@@ -134,7 +135,7 @@ export class LibraryStore {
     return this.mutate(async () => {
       name = validName(name);
       const transcript = await this.transcript(id);
-      if (!transcript) throw new Error('Primero genera una transcripción.');
+      if (!transcript) throw new LocalizedError('transcriptRequired');
       const speakers = transcript.speakers ??= [];
       const next = Math.max(0, ...speakers.map(s => Number(s.id.split('-')[1]) || 0)) + 1;
       const speaker = { id: `actor-${String(next).padStart(3, '0')}`, name };
@@ -147,11 +148,11 @@ export class LibraryStore {
     return this.mutate(async () => {
       requireSpeakerId(speakerId);
       const transcript = await this.transcript(id);
-      if (!transcript || !transcript.speakers?.some(s => s.id === speakerId)) throw new Error('No se encontró el hablante.');
+      if (!transcript || !transcript.speakers?.some(s => s.id === speakerId)) throw new LocalizedError('speakerNotFound');
       // Legacy transcripts gain stable segment IDs on the first correction.
       transcript.segments.forEach((s, i) => { s.id ??= `segment-${String(i + 1).padStart(6, '0')}`; });
       const segment = transcript.segments.find(s => s.id === segmentId);
-      if (!segment) throw new Error('No se encontró el fragmento.');
+      if (!segment) throw new LocalizedError('segmentNotFound');
       segment.speakerId = speakerId;
       const dir = this.videoDir(id);
       let text = await this.text(id);

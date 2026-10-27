@@ -1,65 +1,59 @@
-# Publicar una versión
+# Publishing a release
 
-El repositorio sigue el flujo de las otras extensiones Dev: GitHub Actions valida los cambios y publica un release al llegar una versión nueva a `main`.
+Dev Transcription follows the other Dev extensions: GitHub Actions validates changes and publishes each new version that reaches `main`.
 
-## Primera subida a GitHub
+## Release checklist
 
-Los metadatos apuntan a `MauAlvarado43/dev-transcription`, siguiendo la cuenta de las otras extensiones. Si eliges otro propietario o nombre, actualiza `repository`, `homepage` y `bugs` en `package.json` y los enlaces del README.
-
-1. Crea un repositorio vacío llamado `dev-transcription` en GitHub, sin inicializar README, licencia ni `.gitignore`.
-2. Desde este directorio, valida el paquete:
-
-   ```sh
-   npm ci
-   npm run package
-   python3 scripts/verify-package.py
-   ```
-
-3. Revisa los archivos y realiza la primera subida:
-
-   ```sh
-   git add .
-   git commit -m "Prepare Dev Transcription for GitHub releases"
-   git remote add origin git@github.com:MauAlvarado43/dev-transcription.git
-   git push -u origin main
-   ```
-
-El primer push inicia **Validate and release** y publica `v0.3.0` con `dev-transcription-0.3.0.vsix`. No hace falta crear el tag ni el release manualmente. GitHub Actions debe estar habilitado; el workflow solicita `contents: write` solo para el job de publicación y usa el `GITHUB_TOKEN` automático, sin secretos adicionales. Las políticas de la cuenta u organización deben permitir ese permiso.
-
-## Siguientes versiones
-
-1. Trabaja en una rama `feature/<tema>`; puedes integrar primero a `develop` como en las otras extensiones.
-2. Documenta cambios visibles en `## [Unreleased]` de `CHANGELOG.md`.
-3. Al preparar la publicación, incrementa la versión y sincroniza el lockfile sin crear un tag:
+1. Work in a `feature/<topic>` branch. You can integrate into `develop` before opening a release pull request to `main`.
+2. Document user-visible changes in English under `## [Unreleased]` in `CHANGELOG.md`.
+3. Increment the version and update the lockfile without creating a tag:
 
    ```sh
    npm version patch --no-git-tag-version
    ```
 
-   Usa `minor` para funcionalidad nueva o cambios relevantes del flujo durante `0.x`; usa `patch` para correcciones y mejoras compatibles.
+   During `0.x`, use `minor` for new features or meaningful workflow changes and `patch` for compatible fixes and small improvements.
 
-4. Mueve las notas pendientes a `## [<versión>]`, con la misma versión de `package.json`. Puedes agregar una fecha: `## [0.3.1] - AAAA-MM-DD`. La sección debe contener notas reales; una sección vacía o con solo comentarios bloquea la validación.
-5. Ejecuta `npm run package` y `python3 scripts/verify-package.py`, incluye `package-lock.json` en el commit y abre el pull request hacia `main`.
-6. Al fusionarlo, Actions publica el VSIX validado, sus notas y el tag que apunta al commit que se verificó.
+4. Move pending notes into `## [<version>]`, matching `package.json`. An optional date is supported: `## [0.4.0] - YYYY-MM-DD`. Empty sections and comment-only sections fail validation.
+5. Run `npm run package` and `python3 scripts/verify-package.py`. Include `package-lock.json` in the commit and open a pull request to `main`.
+6. Merge the pull request. Actions publishes the validated VSIX, matching English release notes, and a `v<version>` tag pointing to the validated commit.
 
-Cada versión se publica una sola vez. Un push con una versión ya publicada valida los cambios y conserva el release existente. Para distribuir cambios nuevos hay que incrementar la versión. No se reemplazan archivos de releases anteriores.
+Each version is published once. A push with an existing version validates changes and preserves its release. Bump the version to distribute new changes. Existing release assets are not replaced.
 
-## Qué verifica Actions
+## What Actions verifies
 
-- Instala las dependencias npm del lockfile con Node.js 22 y configura Python 3.12.
-- Ejecuta TypeScript, pruebas TypeScript/Python, compilación y extracción de notas mediante `npm run package`.
-- Comprueba metadatos y contenido del VSIX, incluido el trabajador Python y la interfaz compilada. Solo se incluyen los archivos enumerados en `.vscodeignore`; se excluyen modelos, entornos, pruebas, scripts y datos locales.
-- Guarda el VSIX y las notas como artefacto del run, también en pull requests. El job de release descarga ese mismo artefacto.
-- Publica únicamente desde `main`. Los pull requests y `develop` no publican releases.
+- Installs locked npm dependencies with Node.js 22 and sets up Python 3.12.
+- Runs TypeScript checking, TypeScript/Python tests, compilation, and release-note extraction through `npm run package`.
+- Checks VSIX metadata and contents, including the compiled interface, Python worker, and English/Spanish manifest catalogs. Only files explicitly included by `.vscodeignore` are shipped.
+- Stores the VSIX and notes as a workflow artifact, including for pull requests. The release job downloads that same validated artifact.
+- Publishes only from `main`. Pull requests and `develop` do not publish releases.
 
-El VSIX es universal: no incluye binarios nativos ni modelos. Las pruebas de CI usan dobles del motor y no verifican reconocimiento real ni compatibilidad de CUDA en cada sistema.
+The VSIX is universal: native binaries and models are installed separately on the user's device. CI uses engine doubles and does not verify actual recognition or CUDA compatibility on every platform.
 
-## Reintentos
+## Repository setup
 
-Si una publicación falla, revisa el run de **Actions → Validate and release** y vuelve a ejecutar los jobs fallidos. También puedes usar **Run workflow** sobre `main`. Un tag preexistente sin release debe apuntar al mismo commit que se está publicando; si no coincide, el workflow falla.
+Metadata points to `MauAlvarado43/dev-transcription`. If the owner or name changes, update `repository`, `homepage`, and `bugs` in `package.json`, plus the README links.
 
-Si el release ya existe, el workflow lo conserva. Para corregir su contenido, prepara una versión nueva.
+For a new copy without a remote, create an empty GitHub repository and push the validated source:
 
-## Distribución
+```sh
+npm ci
+npm run package
+python3 scripts/verify-package.py
+git add .
+git commit -m "Prepare Dev Transcription for GitHub releases"
+git remote add origin git@github.com:MauAlvarado43/dev-transcription.git
+git push -u origin main
+```
 
-Los usuarios descargan el VSIX de GitHub Releases y lo instalan con **Instalar desde VSIX…**. Este flujo publica en GitHub; una publicación en Visual Studio Marketplace requiere configurar por separado el publisher y su autenticación.
+The first push to `main` starts **Validate and release**. Do not create the tag or release manually. GitHub Actions must be enabled. The workflow requests `contents: write` only in the release job and uses the automatic `GITHUB_TOKEN`, without additional secrets. Account or organization policies must allow that permission.
+
+## Retrying a release
+
+If publication fails, inspect **Actions → Validate and release** and rerun the failed jobs. You can also use **Run workflow** on `main`. An existing tag without a release must point to the commit being published; otherwise, publication fails.
+
+If the release already exists, the workflow preserves it. Prepare a new version to correct its contents. Editing historical changelog entries locally does not update notes on already published GitHub releases.
+
+## Distribution
+
+Users download the VSIX from GitHub Releases and install it through **Install from VSIX…**. This workflow publishes to GitHub. Visual Studio Marketplace publication requires separate publisher and authentication setup.

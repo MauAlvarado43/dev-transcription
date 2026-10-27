@@ -1,23 +1,28 @@
-# Contribuir a Dev Transcription
+# Contributing to Dev Transcription
 
-## Preparar el entorno
+## Set up the environment
 
-1. Instala Node.js 22 o posterior y Python 3.12 recomendado, accesible como `python3` para las pruebas.
-2. Ejecuta `npm ci` y `npm run check`.
-3. Usa `F5` → **Run Dev Transcription** para abrir el host de desarrollo, o `npm run watch` para recompilar al editar.
+1. Install Node.js 22 or later and Python, preferably 3.12, available as `python3` for tests.
+2. Run `npm ci` and `npm run check`.
+3. Press `F5` → **Run Dev Transcription** to open the development host, or use `npm run watch` to rebuild while editing.
 
-Las pruebas no requieren GPU, modelos ni instalar `python/requirements.txt`: sustituyen las dependencias del motor. Para probar una transcripción real, prepara el motor desde la extensión y utiliza un video de prueba sin datos privados.
+Tests replace the engine dependencies and do not require a GPU, model downloads, or installing `python/requirements.txt`. For a real transcription, prepare the engine from the extension and use a test video without private data.
 
-## Criterios de los cambios
+## Change guidelines
 
-- Mantén las reglas de dominio en `src/domain.ts` y `src/dialogues.ts`, sin dependencias de VS Code.
-- Accede a la biblioteca mediante `LibraryStore`; conserva IDs, ediciones, respaldos y escrituras atómicas.
-- Mantén el protocolo JSON por líneas entre `src/engine.ts` y `python/transcribe.py`. Los mensajes de diagnóstico no deben mezclarse con los eventos JSON de salida estándar.
-- Conserva la ejecución local del audio y el comportamiento de cancelación y modo sin conexión.
-- Agrega pruebas cuando cambies reglas, datos persistidos o el protocolo del trabajador.
-- Documenta cambios visibles en `## [Unreleased]` del changelog. Sigue [RELEASE.md](RELEASE.md) al preparar una versión.
-- No agregues videos personales, transcripciones, modelos descargados, entornos virtuales ni credenciales al repositorio.
+- Write documentation, release notes, identifiers, comments, and diagnostic messages in English.
+- Maintain English source strings and the complete Spanish translation in `src/i18n.ts`. Keep placeholders identical across catalogs and use `t()` for interface text. Use `LocalizedError` for known validation failures.
+- Use `package.nls.json` and `package.nls.es.json` for VS Code manifest contributions. Native labels follow VS Code's display language; the extension's views use `devTranscription.interfaceLanguage`.
+- Keep interface language separate from `devTranscription.language`, which controls recognition. Never translate or rename saved user content when switching the interface language.
+- Keep domain rules in `src/domain.ts` and `src/dialogues.ts`, without VS Code dependencies.
+- Access the library through `LibraryStore`; preserve IDs, edits, backups, and atomic writes.
+- Preserve the JSON-lines protocol between `src/engine.ts` and `python/transcribe.py`. Do not mix diagnostics with JSON events on standard output.
+- Preserve local audio processing, cancellation, and offline behavior.
+- Add tests when changing domain rules, persisted data, worker contracts, or localization behavior.
+- Document user-visible changes under `## [Unreleased]` in `CHANGELOG.md`. Follow [RELEASE.md](RELEASE.md) when preparing a version.
+- Update `.vscodeignore` and `scripts/verify-package.py` when adding runtime files.
+- Do not commit personal videos, transcripts, downloaded models, virtual environments, or credentials.
 
 ## Pull requests
 
-Incluye una descripción del cambio y su validación, además de capturas cuando cambie la interfaz. Ejecuta `npm run package` y `python3 scripts/verify-package.py` antes de solicitar revisión. Evita mezclar refactors amplios con cambios de comportamiento sin relación.
+Include a change summary, validation, and screenshots for visual changes. Run `npm run package` and `python3 scripts/verify-package.py` before requesting review. Keep broad refactors separate from unrelated behavior changes.

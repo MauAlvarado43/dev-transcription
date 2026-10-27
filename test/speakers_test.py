@@ -32,7 +32,7 @@ class SpeakersTest(unittest.TestCase):
         import tempfile
         from unittest.mock import patch
         with tempfile.TemporaryDirectory() as root, patch.object(speakers.urllib.request, "urlopen") as network:
-            with self.assertRaisesRegex(RuntimeError, "Faltan modelos"):
+            with self.assertRaisesRegex(RuntimeError, "Speaker models are missing"):
                 speakers.prepare_models(root, offline=True)
             network.assert_not_called()
 

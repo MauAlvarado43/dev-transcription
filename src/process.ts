@@ -1,7 +1,7 @@
 import { spawn, ChildProcess } from 'node:child_process';
 import { createInterface } from 'node:readline';
 
-export class Cancelled extends Error { constructor() { super('Operación cancelada.'); } }
+export class Cancelled extends Error { constructor() { super('Operation cancelled.'); } }
 export interface ProcessOptions {
   signal?: AbortSignal; env?: NodeJS.ProcessEnv;
   log?: (text: string) => void; line?: (line: string) => void;
@@ -35,7 +35,7 @@ export function runProcess(command: string, args: string[], options: ProcessOpti
       cleanup();
       if (options.signal?.aborted) reject(new Cancelled());
       else if (code === 0) resolve(output);
-      else reject(new Error(`${command} terminó (${code ?? signal}). ${errors || output}`));
+      else reject(new Error(`${command} exited (${code ?? signal}). ${errors || output}`));
     });
   });
 }

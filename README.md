@@ -1,133 +1,140 @@
 # Dev Transcription
 
-Extensión de VS Code para administrar videos y generar transcripciones en tu equipo. Sigue el patrón de Dev Notes: colecciones en la barra lateral, archivos reales en almacenamiento privado y edición con guardado automático.
+A VS Code extension for organizing videos and generating transcripts on your device. Like Dev Notes, it keeps collections in the sidebar, real files in private storage, and edits saved automatically.
 
-## Instalación desde GitHub
+## Install from GitHub
 
-1. Descarga el archivo `dev-transcription-<versión>.vsix` de [Releases](https://github.com/MauAlvarado43/dev-transcription/releases/latest).
-2. En VS Code, abre **Extensiones → ⋯ → Instalar desde VSIX…** y selecciona el archivo descargado.
-3. Recarga VS Code si lo solicita. Para actualizar, instala el VSIX de la siguiente versión de la misma forma.
+1. Download `dev-transcription-<version>.vsix` from [Releases](https://github.com/MauAlvarado43/dev-transcription/releases/latest).
+2. In VS Code, open **Extensions → ⋯ → Install from VSIX…** and select the downloaded file.
+3. Reload VS Code if prompted. Install a newer VSIX the same way to update.
 
-También puedes usar `code --install-extension ruta/al/archivo.vsix`. El paquete sirve para Windows, macOS y Linux; el motor Python se prepara en el equipo donde uses la extensión.
+You can also run `code --install-extension path/to/extension.vsix`. The universal package supports Windows, macOS, and Linux; its Python engine is installed on the device where you use the extension.
 
-## Uso
+## Interface language
 
-1. Abre **Dev Transcription** en la barra de actividades.
-2. Crea una colección o pulsa **Importar videos**. Sin colecciones se crea «General».
-3. Abre un video y pulsa **Transcribir video**. El motor se instala en un entorno Python privado cuando hace falta. También puedes prepararlo desde **Configuración → Motor y almacenamiento**.
-4. Lee la transcripción, pulsa una marca de tiempo para saltar en el video o usa **Editar** para corregir el Markdown. Los cambios se guardan automáticamente. `Ctrl+E` alterna lectura/edición y `Ctrl+S` vuelve a guardar (`Cmd` en macOS).
-5. Exporta el **Markdown editado**, o el reconocimiento original en TXT, SRT, VTT o JSON. Las correcciones Markdown no modifican los tiempos ni el reconocimiento original.
+The interface defaults to **English**. Open **Settings → Engine and storage → Interface language** to choose English or Spanish, or set `devTranscription.interfaceLanguage` to `en` or `es`. Open views update without reloading or replacing your transcript edits.
 
-El menú `⋯` de cada video permite transcribir, cancelar, renombrar, mover y enviar a la papelera. El de una colección permite importar, transcribir todos los pendientes, renombrar o eliminarla cuando está vacía. La búsqueda incluye títulos, colecciones, texto de las transcripciones y nombres de hablantes.
+VS Code command names, the sidebar view name, and native setting descriptions use VS Code's display language through `package.nls.json` and `package.nls.es.json`. These native labels follow VS Code's own language configuration.
 
-Los videos se **copian** a la biblioteca. Eliminar una copia usa la papelera y conserva el original. Importar videos grandes requiere espacio para esa copia. La cancelación de una importación detiene los siguientes archivos después de terminar la copia actual.
+The interface language is separate from `devTranscription.language`, which controls **speech recognition**. Changing the interface language does not translate transcripts, rename collections or speakers, or change recognition languages. Documentation, release notes, source identifiers, comments, and engine diagnostics are maintained in English. Spanish UI strings live in the translation catalogs.
 
-## Motor local
+## Usage
 
-Se usa [faster-whisper](https://github.com/SYSTRAN/faster-whisper) con **Whisper large-v3**, reconocimiento multilingüe, búsqueda con cinco candidatos y detección de voz para filtrar silencios. Se prioriza calidad sobre velocidad. No se traduce el audio. Con idioma **Automático**, el reconocimiento elige exclusivamente entre español e inglés para cada fragmento de voz y admite ambos en una misma conversación. El decodificador queda fijado al idioma elegido; no se habilita la detección de todos los idiomas. Si aun así se genera una escritura ajena a esos dos idiomas, se marca el fragmento como no reconocido en vez de presentarlo como diálogo válido. Se reinicia el contexto entre fragmentos cortos para reducir traducciones accidentales al idioma dominante; los cambios muy breves dentro de una misma frase aún pueden fallar.
+1. Open **Dev Transcription** in the activity bar.
+2. Create a collection or choose **Import videos**. With no collections, a “General” collection is created automatically.
+3. Open a video and choose **Transcribe video**. The engine installs in a private Python environment when needed. You can also prepare it under **Settings → Engine and storage**.
+4. Read the transcript, select a timestamp to seek in the video, or choose **Edit** to correct the Markdown. Changes save automatically. `Ctrl+E` switches between reading and editing; `Ctrl+S` saves again (`Cmd` on macOS).
+5. Export **Edited Markdown**, or export the original recognition as TXT, SRT, VTT, or JSON. Markdown corrections do not alter timestamps or the original recognition.
 
-- **NVIDIA:** el modo automático intenta CUDA con precisión FP16. En Linux, el instalador prepara cuBLAS y cuDNN dentro del entorno privado. Si CUDA falla, el trabajo se reintenta en CPU INT8.
-- **CPU:** funciona sin NVIDIA, incluyendo Apple y AMD; `large-v3` puede tardar bastante. Los modelos `turbo`, `medium`, `small`, `base` y `tiny` permiten reducir tiempo y memoria.
-- **Python:** si tienes `uv`, se crea un entorno con Python 3.12. Si no, se usa `python3` (`python` en Windows) con `venv` y `pip`. Puedes indicar el ejecutable en `devTranscription.pythonPath`. Se recomienda Python 3.12 para disponer de paquetes binarios compatibles.
-- El decodificador PyAV incluye bibliotecas FFmpeg: no necesitas instalar el ejecutable FFmpeg.
-- Windows con CUDA requiere las bibliotecas NVIDIA compatibles disponibles en `PATH`; CPU funciona sin ellas.
+Each video's `⋯` menu supports transcription, cancellation, renaming, moving, and deletion to the trash. A collection's menu supports importing, transcribing pending videos, renaming, and deleting an empty collection. Search includes titles, collection names, transcript text, and speaker names.
 
-La instalación inicial y la primera descarga de cada modelo requieren internet y varios GB de espacio. Solo se descargan paquetes y pesos: no se envía el video ni su transcripción a un servicio. El modelo queda en caché. **Configuración → Descargar modelos** permite preparar el reconocimiento y la separación de voces de antemano; después activa `devTranscription.offline` para exigir el uso de los archivos locales.
+Videos are **copied** into the library. Deleting a copy uses the trash and preserves the original. Large imports require enough space for a copy. Cancelling an import stops subsequent files after the current copy finishes.
 
-La calidad depende del audio: ruido, música, voces superpuestas y nombres propios pueden producir errores. La detección de hablantes puede unir voces parecidas o dividir una misma voz; las voces superpuestas no se separan en pistas individuales. Puedes fijar el idioma y aportar vocabulario en Configuración.
+## Local engine
 
-## Lectura de diálogos
+The extension uses [faster-whisper](https://github.com/SYSTRAN/faster-whisper) with **Whisper large-v3**, multilingual recognition, a beam size of five, and voice activity detection to filter silence. Quality takes priority over speed. Audio is transcribed without translation.
 
-**Agrupar diálogos** está activo por defecto en Lectura: une fragmentos consecutivos de un mismo hablante con pausas de hasta 3 segundos y un máximo de 60 segundos por bloque combinado. Los cambios de hablante siempre abren otro bloque. Si la transcripción no tiene hablantes asignados, se agrupa solo por tiempo.
+With the conversation language set to **Automatic**, recognition chooses only Spanish or English for each speech segment and supports both in the same conversation. The decoder stays fixed to the selected language instead of enabling detection of every language. If recognition still produces an unrelated script, the segment is marked as unrecognized. Context resets between short segments to reduce accidental translation into the dominant language; very brief language switches within a sentence can still fail.
 
-Puedes volver a los fragmentos con el conmutador de Lectura, o cambiar la pausa y duración máxima en **Configuración → Lectura**. Cada bloque muestra el intervalo, el hablante cuando está asignado y el texto unido. Los fragmentos originales, sus tiempos e IDs se conservan en Tiempos y JSON; la agrupación de lectura no altera el Markdown editado ni sus exportaciones.
+- **NVIDIA:** automatic processing tries CUDA with FP16. On Linux, the installer prepares cuBLAS and cuDNN inside the private environment. If CUDA fails, the job retries on CPU with INT8.
+- **CPU:** works without NVIDIA, including Apple and AMD hardware. `large-v3` can be slow; `turbo`, `medium`, `small`, `base`, and `tiny` reduce time and memory use.
+- **Python:** when `uv` is available, the extension creates a Python 3.12 environment. Otherwise, it uses `python3` (`python` on Windows) with `venv` and `pip`. Set `devTranscription.pythonPath` to choose an executable. Python 3.12 is recommended for compatible binary packages.
+- PyAV includes FFmpeg libraries; you do not need the FFmpeg executable.
+- Windows CUDA requires compatible NVIDIA libraries on `PATH`. CPU processing works without them.
 
-## Hablantes e idiomas
+Initial installation and the first download of each model need internet access and several GB of storage. Only packages and model weights are downloaded; video and transcript content are not sent to a service. Models stay cached. Use **Settings → Download models** to prepare recognition and speaker models ahead of time, then enable `devTranscription.offline` to require local files.
 
-La separación de voces se ejecuta localmente con [sherpa-onnx](https://k2-fsa.github.io/sherpa/onnx/speaker-diarization/index.html), segmentación pyannote 3.0 y embeddings WeSpeaker ResNet34-LM. Los modelos se descargan de las distribuciones públicas de sherpa-onnx y se ejecutan en CPU; el reconocimiento de palabras sigue usando GPU cuando está disponible. No necesitas una cuenta ni un token.
+Quality depends on the audio. Noise, music, overlapping voices, and proper names can produce errors. Speaker detection may merge similar voices or split one voice; overlapping voices are not separated into individual tracks. You can fix the conversation language and provide vocabulary in Settings.
 
-Cada fragmento nuevo tiene un `id` estable, un `speakerId` y un `language` (`en`, `es`, etc.) en el JSON. Los hablantes reciben IDs como `actor-001` y `actor-002`, locales a esa transcripción; no se intenta reconocer a una persona entre videos distintos. La categoría `actor-unknown` representa voz sin atribución suficiente.
+## Dialogue reading
 
-- En **Hablantes → Renombrar**, cambia «Hablante 1» por el nombre que quieras. Las intervenciones, la búsqueda y las exportaciones resuelven ese nombre sin cambiar el ID.
-- En **Tiempos**, cambia el selector de hablante de un fragmento para corregir una atribución. **Agregar** crea otro hablante sin regenerar el reconocimiento.
-- En **Configuración → Hablantes**, puedes indicar la cantidad conocida de voces, ajustar el umbral automático o desactivar su separación.
-- Las transcripciones anteriores siguen abriendo. Puedes agregar y asignar hablantes manualmente o regenerar para detectarlos.
+**Group dialogues** is enabled by default in Reading. It joins consecutive segments from the same speaker with pauses of up to 3 seconds and a maximum combined block duration of 60 seconds. Speaker changes always start a new block. Without speaker assignments, grouping uses timing only.
 
-El Markdown interno conserva referencias estables a fragmentos y hablantes; la vista de lectura y la exportación muestran los nombres actuales. La edición libre del cuerpo se conserva al cambiar nombres o asignaciones. Si eliminas manualmente una referencia de fragmento en el Markdown, su asociación estructurada sigue disponible en Tiempos y JSON.
+Use the Reading toggle to return to individual segments, or adjust the pause and duration limits in **Settings → Reading**. Each block displays its time range, assigned speaker, and combined text. Original segments, timestamps, and IDs remain available in Timing and JSON. Reading groups do not change edited Markdown or its exports.
 
-Regenerar vuelve a estimar los hablantes y puede cambiar sus IDs; el resultado anterior, incluidos sus nombres, se respalda en `transcript.previous.json` y `transcript.previous.md`.
+## Speakers and recognition languages
 
-## Guardado y recuperación
+Voice separation runs locally with [sherpa-onnx](https://k2-fsa.github.io/sherpa/onnx/speaker-diarization/index.html), pyannote 3.0 segmentation, and WeSpeaker ResNet34-LM embeddings. The models download from public sherpa-onnx distributions and run on CPU; word recognition continues to use GPU when available. No account or token is required.
 
-La biblioteca es global al perfil de VS Code y permanece al cambiar de proyecto. Usa **Abrir carpeta de la biblioteca** para encontrarla. En una instalación estándar de Linux:
+Each new segment has a stable `id`, a `speakerId`, and a `language` (`en`, `es`, etc.) in JSON. Speakers receive IDs such as `actor-001` and `actor-002`, scoped to that transcript. The extension does not identify the same person across videos. `actor-unknown` represents speech without a reliable assignment.
+
+- Under **Speakers → Rename**, replace “Speaker 1” with a name. Utterances, search, and exports resolve the name without changing its ID.
+- In **Timing**, change a segment's speaker selector to correct an assignment. **Add** creates a speaker without regenerating recognition.
+- Under **Settings → Speakers**, set a known speaker count, adjust the automatic clustering threshold, or disable separation.
+- Older transcripts still open. Add and assign speakers manually, or regenerate to detect them.
+
+Internal Markdown preserves stable segment and speaker references; Reading and exports show current names. Freeform prose edits survive renaming and assignment changes. Removing a segment reference manually from Markdown leaves its structured association available in Timing and JSON.
+
+Regeneration estimates speakers again and may change their IDs. The previous result, including names, is backed up in `transcript.previous.json` and `transcript.previous.md`. Existing user text and names are never translated automatically.
+
+## Storage and recovery
+
+The library belongs to your VS Code profile and stays available when switching projects. Use **Open library folder** to find it. On a standard Linux installation:
 
 ```text
 ~/.config/Code/User/globalStorage/raide.dev-transcription/
   library/
     collections/<uuid>.json
     videos/<uuid>/
-      video.json                 # Título, colección y metadatos
-      source.mp4                 # Copia del video (con su extensión original)
-      transcript.md              # Texto editable con guardado automático
-      transcript.json            # Reconocimiento original y tiempos
-      transcript.previous.md     # Texto anterior a la última regeneración
-      transcript.previous.json   # Hablantes y reconocimiento anteriores
-  runtime/                       # Entorno Python aislado
-  models/                        # Pesos descargados
+      video.json                 # Title, collection, and metadata
+      source.mp4                 # Video copy, retaining its original extension
+      transcript.md              # Editable text with automatic saving
+      transcript.json            # Original recognition and timestamps
+      transcript.previous.md     # Text before the last regeneration
+      transcript.previous.json   # Previous speakers and recognition
+  runtime/                       # Isolated Python environment
+  models/                        # Downloaded weights
 ```
 
-Copia **toda la carpeta `library`** para respaldar tus colecciones y videos. Para restaurar en otro equipo, cierra las ventanas de VS Code y reemplaza la carpeta `library` de esa instalación con la copia. El entorno Python no es portable: se reinstala con **Instalar o reparar motor local**. El modelo puede descargarse de nuevo. No hay sincronización ni subida automática a la nube.
+Back up the **entire `library` folder** to preserve collections and videos. To restore on another device, close all VS Code windows and replace that installation's `library` folder with the backup. The Python environment is not portable: reinstall it with **Install or repair local engine**. Models can be downloaded again. There is no automatic cloud upload or synchronization.
 
-Las escrituras de texto usan archivos temporales y reemplazo atómico. Un trabajo cancelado o fallido conserva la transcripción existente. Antes de regenerar se pide confirmación y se guarda el Markdown anterior en `transcript.previous.md`. Cada trabajo muestra su etapa actual en la biblioteca, el reproductor y la barra de estado. La identificación de voces y la transcripción tienen porcentajes independientes de 0 a 100; las etapas completadas quedan visibles en el reproductor mientras avanza el trabajo. El avance se calcula a partir de bloques de análisis de voz y audio hablado procesado, no del tiempo estimado restante. La carga del modelo, extracción de audio, localización de voz y guardado muestran actividad sin inventar un porcentaje. Los trabajos se ejecutan de uno en uno para limitar la memoria usada. Cerrar una pestaña no cancela el trabajo; cerrar o recargar VS Code detiene los trabajos, que se deben iniciar de nuevo. La cola no se restaura automáticamente.
+Text writes use temporary files and atomic replacement. A failed or cancelled job preserves the existing transcript. Regeneration asks for confirmation and backs up the previous Markdown. Jobs display their current stage in the library, player, and status bar. Voice identification and transcription have independent percentages from 0 to 100; completed stages remain visible in the player as work advances.
 
-## Reproducción y formatos
+Progress measures voice analysis blocks and processed speech audio, rather than estimated time remaining. Model loading, audio extraction, voice localization, and saving show activity without an invented percentage. Jobs run one at a time to limit memory use. Closing a tab does not cancel work. Closing or reloading VS Code stops jobs, which must be started again; the queue is not restored automatically.
 
-Importa MP4, MKV, MOV, WebM, AVI, M4V, MPEG, MPG, WMV, FLV, MTS, M2TS y OGV. La reproducción integrada depende de los códecs de VS Code; si no son compatibles, usa **Abrir en reproductor** para abrir la copia con la aplicación del sistema. El motor de transcripción decodifica el audio independientemente del reproductor integrado. Un video sin pista de audio produce un error; uno sin voz puede generar una transcripción vacía.
+## Playback and formats
 
-## Configuración
+Import MP4, MKV, MOV, WebM, AVI, M4V, MPEG, MPG, WMV, FLV, MTS, M2TS, and OGV. Integrated playback depends on VS Code's codecs. For unsupported playback, choose **Open in player** to open the copy in your system application. Transcription decodes audio independently of the integrated player. A video without an audio track produces an error; one without speech may produce an empty transcript.
 
-| Ajuste | Predeterminado | Uso |
+## Settings
+
+| Setting | Default | Purpose |
 | --- | --- | --- |
-| `devTranscription.model` | `large-v3` | Modelo de reconocimiento. |
-| `devTranscription.device` | `auto` | `auto`, `cpu` o `cuda`. |
-| `devTranscription.language` | `auto` | Solo español o inglés por fragmento; `es` / `en` fuerzan un solo idioma. |
-| `devTranscription.groupDialogues` | `true` | Agrupar la lectura por voz y pausas. |
-| `devTranscription.dialogueGapSeconds` | `3` | Pausa máxima entre fragmentos del mismo bloque. |
-| `devTranscription.dialogueMaxSeconds` | `60` | Duración máxima al unir fragmentos. |
-| `devTranscription.diarization` | `true` | Separar voces y asignar IDs. |
-| `devTranscription.numSpeakers` | `0` | Cantidad conocida de voces; 0 estima automáticamente. |
-| `devTranscription.speakerThreshold` | `0.5` | Umbral de agrupación; menor valor tiende a separar más voces. |
-| `devTranscription.initialPrompt` | vacío | Vocabulario y nombres propios. |
-| `devTranscription.offline` | `false` | Exigir un modelo previamente descargado. |
-| `devTranscription.pythonPath` | vacío | Python para crear el entorno privado. |
+| `devTranscription.interfaceLanguage` | `en` | Interface language: English or Spanish. |
+| `devTranscription.model` | `large-v3` | Recognition model. |
+| `devTranscription.device` | `auto` | `auto`, `cpu`, or `cuda`. |
+| `devTranscription.language` | `auto` | Spanish or English per segment; `es` / `en` fixes one language. |
+| `devTranscription.groupDialogues` | `true` | Group Reading by voice and pauses. |
+| `devTranscription.dialogueGapSeconds` | `3` | Maximum pause between segments in a block. |
+| `devTranscription.dialogueMaxSeconds` | `60` | Maximum duration of a combined block. |
+| `devTranscription.diarization` | `true` | Separate voices and assign IDs. |
+| `devTranscription.numSpeakers` | `0` | Known speaker count; 0 estimates automatically. |
+| `devTranscription.speakerThreshold` | `0.5` | Clustering threshold; lower values tend to split more voices. |
+| `devTranscription.initialPrompt` | empty | Vocabulary and proper names. |
+| `devTranscription.offline` | `false` | Require previously downloaded models. |
+| `devTranscription.pythonPath` | empty | Python executable used to create the private environment. |
 
-Abre el botón o engranaje **Configuración** para ver los ajustes y las acciones del motor. El estado del motor, su preparación, la descarga de modelos y el acceso a la carpeta de la biblioteca viven en esa pantalla.
+Open the **Settings** button or gear to adjust the interface, engine, recognition, and storage actions. **Dev Transcription: Show engine log** displays installation, audio, and CUDA diagnostics. **Install or repair local engine** reinstalls dependencies while preserving the library.
 
-En **Dev Transcription: Mostrar registro del motor** puedes revisar errores de instalación, audio o CUDA. **Instalar o reparar motor local** vuelve a instalar dependencias sin tocar la biblioteca.
+## Development
 
-## Desarrollo e instalación
-
-Requiere Node.js 22 o posterior y Python 3.12 recomendado, disponible como `python3` para ejecutar las pruebas. Las pruebas usan dobles del motor: no instalan dependencias de transcripción, descargan modelos ni requieren GPU.
+Requires Node.js 22 or later and Python, preferably 3.12, available as `python3` for tests. Tests use engine doubles: they do not install transcription dependencies, download models, or require a GPU.
 
 ```sh
 npm ci
 npm run check
 npm run package
-code --install-extension dist/dev-transcription-0.3.0.vsix
+python3 scripts/verify-package.py
 ```
 
-Abre el proyecto y usa `F5` → **Run Dev Transcription** para iniciar un host de desarrollo. `npm run watch` mantiene la compilación actualizada.
+Install the generated `dist/dev-transcription-<version>.vsix` with `code --install-extension`. Open the project and press `F5` → **Run Dev Transcription** to launch a development host. `npm run watch` rebuilds as you edit.
 
-El código TypeScript está dividido en dominio, almacenamiento, procesos, motor, cola, host de VS Code e interfaz webview. `python/transcribe.py` es el trabajador local con protocolo JSON por líneas. La extensión no tiene dependencias npm de producción; el VSIX contiene el código compilado, la interfaz y el trabajador Python, sin modelos ni entornos.
+TypeScript is split into domain rules, storage, processes, engine, queue, VS Code host, interface, and localization. `python/transcribe.py` is the local worker, communicating through JSON lines. The extension has no production npm dependencies. Its VSIX contains bundled code, the interface, translation catalogs, and the Python worker, without models or environments.
 
-`npm run package` toma la versión de `package.json` para generar `dist/dev-transcription-<versión>.vsix`. Puedes comprobar su contenido con `python3 scripts/verify-package.py`.
+GitHub Actions validates and packages pull requests and pushes to `develop` and `main`. A push to `main` with a new version creates `v<version>` and a release containing the validated VSIX and the matching English changelog section. See [RELEASE.md](RELEASE.md), [CONTRIBUTING.md](CONTRIBUTING.md), and [SECURITY.md](SECURITY.md).
 
-GitHub Actions valida y empaqueta los pull requests y los pushes a `develop` y `main`. Cada push a `main` con una versión nueva crea el tag `v<versión>` y un release con el VSIX validado y las notas correspondientes de `CHANGELOG.md`. Consulta [RELEASE.md](RELEASE.md) para la primera subida y las siguientes versiones, [CONTRIBUTING.md](CONTRIBUTING.md) para desarrollo y [SECURITY.md](SECURITY.md) para el manejo de datos y reportes de seguridad.
+Previously saved recognition is not corrected automatically. Regenerate to apply Spanish/English restrictions; the previous names and text remain backed up.
 
-Licencia MIT.
+## Third-party models
 
-Los resultados guardados anteriormente no se corrigen automáticamente: regenera la transcripción para aplicar el reconocimiento limitado a español e inglés. Se conserva el respaldo anterior con sus nombres y texto.
-
-## Modelos de terceros
-
-El código de la extensión usa MIT. Los pesos descargados conservan sus propias licencias: [pyannote segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0) (MIT), [WeSpeaker VoxCeleb ResNet34-LM](https://huggingface.co/Wespeaker/wespeaker-voxceleb-resnet34-LM) (CC BY 4.0) y [Whisper large-v3](https://huggingface.co/openai/whisper-large-v3) (Apache 2.0). La conversión ONNX y su distribución corresponden a [sherpa-onnx / k2-fsa](https://github.com/k2-fsa/sherpa-onnx). Los pesos no se incluyen en el VSIX.
+The extension code uses the MIT license. Downloaded weights retain their own licenses: [pyannote segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0) (MIT), [WeSpeaker VoxCeleb ResNet34-LM](https://huggingface.co/Wespeaker/wespeaker-voxceleb-resnet34-LM) (CC BY 4.0), and [Whisper large-v3](https://huggingface.co/openai/whisper-large-v3) (Apache 2.0). ONNX conversion and distribution are provided by [sherpa-onnx / k2-fsa](https://github.com/k2-fsa/sherpa-onnx). Weights are not included in the VSIX.

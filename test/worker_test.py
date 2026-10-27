@@ -126,7 +126,7 @@ class WorkerTest(unittest.TestCase):
             with patch.dict('sys.modules', {'faster_whisper': types.SimpleNamespace(WhisperModel=Model), 'faster_whisper.audio': types.SimpleNamespace(decode_audio=lambda *a, **kw: [0] * 32000)}), patch.object(speakers, 'speech_chunks', return_value=[(0, 32000)]), patch.object(worker, 'emit'):
                 worker.run(args)
             result = json.loads(output.read_text())
-            self.assertEqual(result['segments'][0]['text'], '[Fragmento no reconocido]')
+            self.assertEqual(result['segments'][0]['text'], '[Unrecognized segment]')
             self.assertEqual(result['languages'], ['es'])
 
 

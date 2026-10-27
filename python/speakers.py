@@ -13,7 +13,7 @@ def download(url, target, offline):
     if target.is_file():
         return
     if offline:
-        raise RuntimeError("Faltan modelos de hablantes. Desactiva el modo sin conexión y pulsa «Descargar modelo».")
+        raise RuntimeError("Speaker models are missing. Disable offline mode and choose “Download models”.")
     target.parent.mkdir(parents=True, exist_ok=True)
     temporary = target.with_suffix(target.suffix + ".part")
     try:
@@ -23,7 +23,7 @@ def download(url, target, offline):
             while chunk := response.read(1024 * 1024):
                 total += len(chunk)
                 if total > 512 * 1024 * 1024:
-                    raise RuntimeError("El modelo de hablantes excede el tamaño esperado.")
+                    raise RuntimeError("The speaker model exceeds the expected size.")
                 stream.write(chunk)
         temporary.replace(target)
     finally:
@@ -42,10 +42,10 @@ def prepare_models(cache, offline=False):
             for name in ("LICENSE", "README.md", "model.onnx"):
                 member = bundle.getmember(f"{SEGMENTATION}/{name}")
                 if not member.isfile() or member.size > 20 * 1024 * 1024:
-                    raise RuntimeError("Archivo de segmentación inválido.")
+                    raise RuntimeError("Invalid segmentation file.")
                 stream = bundle.extractfile(member)
                 if stream is None:
-                    raise RuntimeError("Modelo de segmentación incompleto.")
+                    raise RuntimeError("Incomplete segmentation model.")
                 destination = segmentation.parent / name
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 temporary = destination.with_suffix(destination.suffix + ".part")
@@ -57,7 +57,7 @@ def prepare_models(cache, offline=False):
 
 def diarize(audio, cache, offline, num_speakers, threshold, emit):
     import sherpa_onnx
-    emit("status", stage="speakers", message="Preparando modelos de voces…")
+    emit("status", stage="speakers", message="Preparing local speaker models…")
     segmentation, embedding = prepare_models(cache, offline)
     threads = min(4, os.cpu_count() or 2)
     config = sherpa_onnx.OfflineSpeakerDiarizationConfig(
@@ -70,13 +70,13 @@ def diarize(audio, cache, offline, num_speakers, threshold, emit):
         min_duration_on=0.3, min_duration_off=0.5,
     )
     if not config.validate():
-        raise RuntimeError("La configuración de detección de hablantes no es válida.")
+        raise RuntimeError("Invalid speaker detection configuration.")
     detector = sherpa_onnx.OfflineSpeakerDiarization(config)
     if detector.sample_rate != 16000:
-        raise RuntimeError("El modelo de hablantes requiere audio a 16 kHz.")
-    emit("progress", stage="speakers", percent=0, message="Identificando voces…")
+        raise RuntimeError("The speaker model requires 16 kHz audio.")
+    emit("progress", stage="speakers", percent=0, message="Identifying voices…")
     def progress(done, total):
-        emit("progress", stage="speakers", percent=min(99, 100 * done / max(total, 1)), message="Identificando voces…")
+        emit("progress", stage="speakers", percent=min(99, 100 * done / max(total, 1)), message="Identifying voices…")
         return 0
     turns = detector.process(audio, callback=progress).sort_by_start_time()
     labels = {}
@@ -85,7 +85,7 @@ def diarize(audio, cache, offline, num_speakers, threshold, emit):
         if turn.speaker not in labels:
             labels[turn.speaker] = f"actor-{len(labels) + 1:03d}"
         result.append({"start": turn.start, "end": turn.end, "speakerId": labels[turn.speaker]})
-    emit("progress", stage="speakers", percent=100, message="Voces identificadas")
+    emit("progress", stage="speakers", percent=100, message="Voices identified")
     return result
 
 

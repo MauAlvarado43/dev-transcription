@@ -1,11 +1,11 @@
-# Seguridad y datos locales
+# Security and local data
 
-Dev Transcription guarda copias de videos, transcripciones, nombres de hablantes y metadatos en el almacenamiento privado de la extensión de VS Code. Los archivos no tienen cifrado adicional de la extensión; su protección depende del equipo y sus permisos. Los respaldos y exportaciones también pueden contener información personal.
+Dev Transcription stores video copies, transcripts, speaker names, and metadata in private VS Code extension storage. The extension does not add encryption; protection depends on the device and its file permissions. Backups and exports may also contain personal information.
 
-El reconocimiento y la separación de voces se ejecutan localmente. La instalación del motor y la descarga de modelos usan internet para obtener paquetes y pesos; no suben el audio ni sus transcripciones. El modo sin conexión exige modelos previamente descargados. Las licencias de esos modelos se describen en el [README](README.md#modelos-de-terceros).
+Recognition and voice separation run locally. Engine setup and model downloads use the internet to fetch packages and weights; audio and transcript content are not uploaded. Offline mode requires previously downloaded models. Model licenses are listed in the [README](README.md#third-party-models).
 
-El VSIX incluye el trabajador Python y sus requisitos, pero no el entorno, los pesos ni la biblioteca del usuario. No incluyas videos, transcripciones, rutas personales o registros con información sensible en issues, pull requests o capturas.
+The VSIX includes the Python worker and its requirements, without the environment, weights, or user library. Do not include videos, transcripts, personal paths, or sensitive logs in issues, pull requests, or screenshots.
 
-## Reportar una vulnerabilidad
+## Reporting a vulnerability
 
-Usa **Security → Report a vulnerability** del repositorio cuando esté habilitado el reporte privado de vulnerabilidades. Si no está disponible, solicita al mantenedor un canal privado sin publicar los detalles de explotación o datos personales. Incluye las versiones de la extensión y VS Code, el sistema operativo, pasos mínimos de reproducción y el impacto esperado.
+Use **Security → Report a vulnerability** when private vulnerability reporting is enabled on the repository. If unavailable, ask the maintainer for a private channel without publishing exploit details or personal data. Include the extension and VS Code versions, operating system, minimal reproduction steps, and expected impact.

@@ -2,35 +2,41 @@
 
 ## [Unreleased]
 
+## [0.4.0]
+
+- Added English and Spanish interface catalogs, with English as the default.
+- Added `devTranscription.interfaceLanguage`, separate from the conversation language used for speech recognition.
+- Localized the library, editor, settings, dialogs, validation messages, progress, accessibility labels, and VS Code manifest contributions.
+- Open views update when the interface language changes, preserving transcript edits and user-defined names.
+- Standardized documentation, historical changelog entries, source messages, and engine diagnostics in English.
+- Included and verified both manifest translation catalogs in the VSIX.
+
 ## [0.3.0]
 
-- Preparación del repositorio para GitHub, validación en pull requests y releases automáticos con VSIX y notas de esta versión al publicar en `main`.
-
-- Modo automático restringido a español e inglés por fragmento; las escrituras ajenas se marcan como no reconocidas.
-
-- Lectura agrupada por hablante, pausa y duración máxima; conmutador para volver a los fragmentos originales.
-- Ajustes de lectura en Configuración. La agrupación conserva las ediciones, IDs y tiempos de cada fragmento.
-
-- Porcentajes independientes para identificación de voces y transcripción, con historial de etapas completadas en el reproductor.
-- Etapa y porcentaje visibles en la biblioteca y la barra de estado; reinicio del indicador al cambiar de etapa o reintentar en CPU.
+- Prepared the repository for GitHub, pull request validation, and automatic releases with a VSIX and version-specific changelog notes on `main`.
+- Restricted automatic recognition to Spanish and English per segment; unrelated scripts are marked as unrecognized.
+- Added reading groups by speaker, pause, and maximum duration, with a toggle to return to original segments.
+- Added reading settings. Grouping preserves edits, IDs, and timestamps.
+- Added independent percentages for voice identification and transcription, with completed stage history in the player.
+- Displayed stage and percentage in the library and status bar; reset progress when changing stages or retrying on CPU.
 
 ## [0.2.1]
 
-- Corregido el desbordamiento horizontal de la biblioteca con mensajes largos de progreso o nombres extensos.
-- Ajustados el espaciado del webview y los menús para barras laterales estrechas.
+- Fixed horizontal library overflow with long progress messages or names.
+- Adjusted webview spacing and menus for narrow sidebars.
 
 ## [0.2.0]
 
-- Reconocimiento por fragmentos para conversaciones que alternan inglés y español, con idioma guardado por intervención.
-- Separación local de voces con IDs de hablante y de fragmento.
-- Nombres editables, alta manual de hablantes y corrección de asignaciones desde Tiempos.
-- Exportaciones y búsqueda con nombres e IDs; respaldo del JSON anterior al regenerar.
-- Pantalla de Configuración con ajustes, estado del motor, preparación, descargas y acceso al almacenamiento. Retirado el bloque inferior de la biblioteca.
+- Added segment-based recognition for conversations switching between English and Spanish, with language stored per utterance.
+- Added local voice separation with stable speaker and segment IDs.
+- Added editable speaker names, manual speakers, and assignment correction in Timing.
+- Included names and IDs in exports and search; backed up previous JSON before regeneration.
+- Added Settings for engine status, setup, model downloads, and storage. Removed the library footer controls.
 
 ## [0.1.0]
 
-- Biblioteca local organizada por colecciones con importación, búsqueda, renombrado y movimiento de videos.
-- Transcripción con faster-whisper y large-v3, GPU NVIDIA o CPU, cola y cancelación.
-- Reproductor, lectura con marcas de tiempo y edición Markdown con guardado automático.
-- Exportación Markdown, TXT, SRT, VTT y JSON.
-- Entorno privado del motor, descarga de modelos y modo sin conexión.
+- Added a local library organized into collections with video import, search, renaming, and moving.
+- Added faster-whisper transcription with large-v3, NVIDIA GPU or CPU, a serial queue, and cancellation.
+- Added a player, timestamped reading, and Markdown editing with automatic saving.
+- Added Markdown, TXT, SRT, VTT, and JSON exports.
+- Added a private engine environment, model downloads, and offline mode.

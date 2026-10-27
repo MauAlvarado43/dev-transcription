@@ -1,8 +1,9 @@
+import { t, english } from './i18n';
 import type { Job, JobStageId } from './domain';
 
 export const STAGE_LABELS: Record<JobStageId, string> = {
-  preparing: 'Preparando modelo', audio: 'Extrayendo audio', speakers: 'Identificando voces',
-  speech: 'Localizando fragmentos de voz', transcription: 'Transcribiendo', saving: 'Guardando transcripción'
+  preparing: english.stagePreparing, audio: english.stageAudio, speakers: english.stageSpeakers,
+  speech: english.stageSpeech, transcription: english.stageTranscription, saving: english.stageSaving
 };
 export interface ProgressEvent { stage?: JobStageId; message?: string; percent?: number; restart?: boolean }
 export function updateJobProgress(job: Job, event: ProgressEvent): void {
@@ -27,6 +28,11 @@ export function updateJobProgress(job: Job, event: ProgressEvent): void {
   }
 }
 export function jobProgressLabel(job: Job): string {
-  const label = job.stage ? STAGE_LABELS[job.stage] : job.message;
+  const label = job.stage ? stageLabel(job.stage) : job.state === 'queued' ? t('queued') : t('preparing');
   return `${label}${job.percent !== undefined ? ` · ${Math.floor(job.percent)}%` : '…'}`;
+}
+
+export function stageLabel(stage: JobStageId): string {
+  const keys = { preparing: 'stagePreparing', audio: 'stageAudio', speakers: 'stageSpeakers', speech: 'stageSpeech', transcription: 'stageTranscription', saving: 'stageSaving' } as const;
+  return t(keys[stage]);
 }

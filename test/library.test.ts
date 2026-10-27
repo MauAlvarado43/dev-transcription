@@ -33,7 +33,7 @@ test('import, edit, restart, move and rename keep the original and the transcrip
   assert.match(await reopened.text(video.id), /Texto corregido/);
   assert.deepEqual(await reopened.transcript(video.id), transcript);
   assert.deepEqual(await reopened.search('corregido'), [video.id]);
-  await assert.rejects(store.removeEmptyCollection(other.id), /Mueve o elimina/);
+  await assert.rejects(store.removeEmptyCollection(other.id), /Move or delete/);
   await store.removeEmptyCollection(collection.id);
   assert.equal((await store.collections()).length, 1);
 });
@@ -60,7 +60,7 @@ test('paths cannot escape storage and imports do not leave partial entries', asy
   for (const id of ['../outside', '/tmp/file', '', '..', `${randomUUID()}/..`]) assert.throws(() => store.videoDir(id));
   assert.throws(() => validId('bad'));
   await assert.rejects(store.importVideo(collection.id, '/missing/video.mp4'));
-  await assert.rejects(store.importVideo(collection.id, '/missing/script.sh'), /no admitido/);
+  await assert.rejects(store.importVideo(collection.id, '/missing/script.sh'), /Unsupported/);
   assert.deepEqual(await store.videos(), []);
   assert.deepEqual(await fs.readdir(path.join(store.root, 'videos')), []);
   assert.throws(() => validName('  '));

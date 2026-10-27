@@ -35,7 +35,7 @@ test('queue runs one job at a time, skips cancelled jobs and preserves previous 
       try {
         if (id === videos[0]!.id) await gate;
         if (signal.aborted) throw new Cancelled();
-        if (id === videos[2]!.id) throw new Error('Error simulado');
+        if (id === videos[2]!.id) throw new Error('Simulated error');
         return result;
       } finally { active--; }
     }
@@ -54,7 +54,7 @@ test('queue runs one job at a time, skips cancelled jobs and preserves previous 
   assert.deepEqual(calls, [videos[0]!.id, videos[2]!.id, videos[3]!.id]);
   assert.equal(failures.length, 1);
   assert.equal(await store.text(videos[2]!.id), 'Ediciones anteriores');
-  assert.match((await store.video(videos[2]!.id)).error!, /Error simulado/);
+  assert.match((await store.video(videos[2]!.id)).error!, /Simulated error/);
   assert.ok((await store.video(videos[3]!.id)).transcribedAt);
   assert.equal(queue.snapshot().length, 0);
 });

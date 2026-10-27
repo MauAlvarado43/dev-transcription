@@ -1,3 +1,4 @@
+import { english } from './i18n';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -20,7 +21,7 @@ export class TranscriptionQueue {
     if (this.disposed || this.has(id)) return;
     await this.store.video(id);
     if (this.disposed || this.has(id)) return;
-    this.jobs.set(id, { id, state: 'queued', message: 'En cola' });
+    this.jobs.set(id, { id, state: 'queued', message: english.queued });
     this.changed();
     void this.drain();
   }
@@ -36,8 +37,8 @@ export class TranscriptionQueue {
         const [id, job] = this.jobs.entries().next().value!;
         const controller = new AbortController();
         this.current = { id, controller };
-        job.state = 'running'; job.message = 'Preparando transcripción…';
-        updateJobProgress(job, { stage: 'preparing', message: 'Preparando transcripción…' });
+        job.state = 'running'; job.message = english.queuePreparing;
+        updateJobProgress(job, { stage: 'preparing', message: english.queuePreparing });
         this.changed();
         const temp = path.join(this.engine.root, `job-${randomUUID()}.json`);
         let completed = false;
@@ -48,7 +49,7 @@ export class TranscriptionQueue {
             this.changed();
           });
           if (controller.signal.aborted) throw new Cancelled();
-          updateJobProgress(job, { stage: 'saving', message: 'Guardando transcripción y hablantes…' });
+          updateJobProgress(job, { stage: 'saving', message: english.queueSaving });
           this.changed();
           await this.store.saveTranscript(id, result);
           completed = true;
