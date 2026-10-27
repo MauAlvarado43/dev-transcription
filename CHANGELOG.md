@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.3.0
+## [Unreleased]
+
+## [0.3.0]
+
+- Preparación del repositorio para GitHub, validación en pull requests y releases automáticos con VSIX y notas de esta versión al publicar en `main`.
 
 - Modo automático restringido a español e inglés por fragmento; las escrituras ajenas se marcan como no reconocidas.
 
@@ -10,12 +14,12 @@
 - Porcentajes independientes para identificación de voces y transcripción, con historial de etapas completadas en el reproductor.
 - Etapa y porcentaje visibles en la biblioteca y la barra de estado; reinicio del indicador al cambiar de etapa o reintentar en CPU.
 
-## 0.2.1
+## [0.2.1]
 
 - Corregido el desbordamiento horizontal de la biblioteca con mensajes largos de progreso o nombres extensos.
 - Ajustados el espaciado del webview y los menús para barras laterales estrechas.
 
-## 0.2.0
+## [0.2.0]
 
 - Reconocimiento por fragmentos para conversaciones que alternan inglés y español, con idioma guardado por intervención.
 - Separación local de voces con IDs de hablante y de fragmento.
@@ -23,7 +27,7 @@
 - Exportaciones y búsqueda con nombres e IDs; respaldo del JSON anterior al regenerar.
 - Pantalla de Configuración con ajustes, estado del motor, preparación, descargas y acceso al almacenamiento. Retirado el bloque inferior de la biblioteca.
 
-## 0.1.0
+## [0.1.0]
 
 - Biblioteca local organizada por colecciones con importación, búsqueda, renombrado y movimiento de videos.
 - Transcripción con faster-whisper y large-v3, GPU NVIDIA o CPU, cola y cancelación.

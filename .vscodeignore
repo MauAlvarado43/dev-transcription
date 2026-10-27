@@ -1,13 +1,14 @@
-src/**
-test/**
-.vscode/**
-node_modules/**
-**/*.map
-**/__pycache__/**
-**/*.pyc
-tsconfig.json
-esbuild.mjs
-package-lock.json
-.gitignore
-dist/*.vsix
-.test-output/**
+# Only ship the runtime, its assets, and user documentation.
+**
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE
+!dist/extension.js
+!dist/webview.js
+!dist/webview.css
+!media/dev-transcription.svg
+!python/transcribe.py
+!python/speakers.py
+!python/languages.py
+!python/requirements.txt

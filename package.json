@@ -5,6 +5,14 @@
   "version": "0.3.0",
   "publisher": "raide",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MauAlvarado43/dev-transcription.git"
+  },
+  "homepage": "https://github.com/MauAlvarado43/dev-transcription#readme",
+  "bugs": {
+    "url": "https://github.com/MauAlvarado43/dev-transcription/issues"
+  },
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -224,9 +232,10 @@
     "watch": "node esbuild.mjs --watch",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/*.test.ts && python3 -m unittest discover -s test -p '*_test.py'",
-    "check": "npm run typecheck && npm test && npm run build",
+    "check": "npm run typecheck && npm test && npm run build && npm run release:notes",
+    "release:notes": "node scripts/extract-release-notes.mjs dist/release-notes.md",
     "vscode:prepublish": "npm run build",
-    "package": "npm run check && vsce package --no-dependencies --allow-missing-repository --out dist/dev-transcription-0.3.0.vsix"
+    "package": "npm run check && node scripts/package.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

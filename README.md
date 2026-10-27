@@ -2,6 +2,14 @@
 
 Extensión de VS Code para administrar videos y generar transcripciones en tu equipo. Sigue el patrón de Dev Notes: colecciones en la barra lateral, archivos reales en almacenamiento privado y edición con guardado automático.
 
+## Instalación desde GitHub
+
+1. Descarga el archivo `dev-transcription-<versión>.vsix` de [Releases](https://github.com/MauAlvarado43/dev-transcription/releases/latest).
+2. En VS Code, abre **Extensiones → ⋯ → Instalar desde VSIX…** y selecciona el archivo descargado.
+3. Recarga VS Code si lo solicita. Para actualizar, instala el VSIX de la siguiente versión de la misma forma.
+
+También puedes usar `code --install-extension ruta/al/archivo.vsix`. El paquete sirve para Windows, macOS y Linux; el motor Python se prepara en el equipo donde uses la extensión.
+
 ## Uso
 
 1. Abre **Dev Transcription** en la barra de actividades.
@@ -99,6 +107,8 @@ En **Dev Transcription: Mostrar registro del motor** puedes revisar errores de i
 
 ## Desarrollo e instalación
 
+Requiere Node.js 22 o posterior y Python 3.12 recomendado, disponible como `python3` para ejecutar las pruebas. Las pruebas usan dobles del motor: no instalan dependencias de transcripción, descargan modelos ni requieren GPU.
+
 ```sh
 npm ci
 npm run check
@@ -109,6 +119,10 @@ code --install-extension dist/dev-transcription-0.3.0.vsix
 Abre el proyecto y usa `F5` → **Run Dev Transcription** para iniciar un host de desarrollo. `npm run watch` mantiene la compilación actualizada.
 
 El código TypeScript está dividido en dominio, almacenamiento, procesos, motor, cola, host de VS Code e interfaz webview. `python/transcribe.py` es el trabajador local con protocolo JSON por líneas. La extensión no tiene dependencias npm de producción; el VSIX contiene el código compilado, la interfaz y el trabajador Python, sin modelos ni entornos.
+
+`npm run package` toma la versión de `package.json` para generar `dist/dev-transcription-<versión>.vsix`. Puedes comprobar su contenido con `python3 scripts/verify-package.py`.
+
+GitHub Actions valida y empaqueta los pull requests y los pushes a `develop` y `main`. Cada push a `main` con una versión nueva crea el tag `v<versión>` y un release con el VSIX validado y las notas correspondientes de `CHANGELOG.md`. Consulta [RELEASE.md](RELEASE.md) para la primera subida y las siguientes versiones, [CONTRIBUTING.md](CONTRIBUTING.md) para desarrollo y [SECURITY.md](SECURITY.md) para el manejo de datos y reportes de seguridad.
 
 Licencia MIT.
 

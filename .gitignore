@@ -1,6 +1,14 @@
 node_modules/
 dist/
+*.vsix
+*.log
 .venv/
 __pycache__/
 *.pyc
 .test-output/
+.vscode-test/
+.artifacts/
+.env
+.env.*
+.DS_Store
+Thumbs.db
